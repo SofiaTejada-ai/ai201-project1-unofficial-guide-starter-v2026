@@ -1,139 +1,154 @@
-# Acceptance criteria — The Unofficial Guide
+# The Unofficial Guide
 
-Five criteria that say what "working" means for this system, written in unit 1
-**before** any results existed.
+**Sofia Tejada** — corpus: `campus_life`
 
-An acceptance criterion names a target: a number, a count, a rate, or something
-a person could plainly observe. *"Retrieval works"* is an opinion. *"For at
-least 4 of my 5 test questions, the top results include a chunk containing the
-answer"* is a criterion.
-
-Under each one, write a sentence or two on **why that target** and not a
-stricter or looser one. A reason that says something about your corpus or your
-pipeline earns credit; *"80% seemed reasonable"* does not.
-
-> Missing your own targets next unit costs you nothing. Setting a target so
-> easy you can't miss it does.
+> **This file is your submission.** Fill it in as you go — most sections get
+> written during the milestone that produces them, not at the end.
+>
+> How the starter works, and every command you'll need, is in `RUNNING.md`.
+> Leave that file alone.
+>
+> **Paste everything as text.** No screenshots, no video. A typed table gets
+> full credit; a picture of the same table gets none.
 
 ---
 
-## 1. Retrieved chunks contain the answer
+# Unit 1
 
-For at least 4 of my 5 test questions, the retrieved chunks include one that
-contains the answer.
+## What This Does
 
-**Why this target:**
+The Unofficial Guide answers questions about student life using the `campus_life` corpus — 88 short, real-world posts about dining halls, housing, courses, and administrative rules that aren't explained clearly anywhere official. It answers specific, factual questions with a right answer, like "when is the deadline to add a course?" or "how often can you change your meal plan tier?" — not open-ended opinions like "what's a good dorm?" Every answer is grounded in the retrieved documents and names its source, and the system refuses questions its corpus doesn't cover instead of guessing.
 
-My documents put the answer in one explicit sentence, so I expect this to be
-an easy target, since there's no inference required. I'm keeping it at 4 of 5
-rather than 5 of 5 anyway: one unlucky retrieval (two similar admin documents
-landing close in distance) shouldn't fail the whole criterion when the system
-is otherwise working as intended.
+## Chunking Strategy
+
+**Chunk size:** Whole document — no fixed character limit. Average ~317 characters, ranging 178–549.
+**Overlap:** None — each document becomes exactly one chunk, so there's nothing to overlap.
+
+The starter's 800-character fixed-size chunker never actually split anything in this corpus, since the longest document is only 549 characters — but that was incidental, not a decision. Once I read the documents, I could see why it didn't matter: campus_life posts already pack one complete thought into a single short document, often as one or two dense statements or a couple of related facts (like a dining hall's narrative plus its hours/cost). Splitting further would only cut a self-contained thought in half. So I replaced the chunker to treat each document as one chunk on purpose, rather than relying on a threshold no document happened to reach.
+
+## Sample Chunks
+
+**Chunk 1** — source: `admin_add_drop_deadline.txt` — produced by: `chunker.py::split_documents`
+
+On the add/drop deadline
+
+You can add a course through the end of the second week. Dropping is a longer window — through the end of week six — but a drop after week two shows as a W on your transcript. Nothing anywhere on the registrar's site says this plainly, and students find out from each other.
+
+**Chunk 2** — source: `course_biol_160.txt` — produced by: `chunker.py::split_documents`
+
+BIOL 160 Cell Biology
+
+I lived here my sophomore year. Format is lecture three times a week with a weekly lab. Assessment: four unit tests and a cumulative final. Not curved.
+
+Expect 9 to 11 hours a week, the heaviest first-year course by reputation.
+
+The one piece of advice: the unit tests come fast, roughly every three weeks; falling behind once is very hard to recover from.
+
+**Chunk 3** — source: `course_hist_118_workload.txt` — produced by: `chunker.py::split_documents`
+
+Workload for HIST 118 Modern World History
+
+People keep asking so: a lot of reading, about 120 pages a week, but no problem sets. That's real time, not optimistic time.
+
+It's front-loaded — the first month is heavier than the rest, partly because you're learning the format.
+
+**Chunk 4** — source: `dining_pellew_dining_hall_followup.txt` — produced by: `chunker.py::split_documents`
+
+Re: Pellew Dining Hall
+
+Adding to what people have said about Pellew Dining Hall. The wait figure of 12 to 18 minutes at peak matches what I've seen. If you're trying to eat between classes, go before 11:45 and it's a different building entirely.
+
+Also worth saying: the furthest hall from anywhere, next to the athletics centre. Nobody tells you this at orientation.
+
+**Chunk 5** — source: `housing_innisfree_hall.txt` — produced by: `chunker.py::split_documents`
+
+Innisfree Hall — what it's actually like
+
+Transferred in last year, so take this with a grain of salt. Built 1991, renovated 2022. Rooms are doubles arranged as pairs sharing one bathroom between two rooms.
+
+The good: the shared-bathroom-between-two-rooms arrangement is the best compromise on campus.
+
+The bad: no air conditioning, which matters for the first three weeks of September.
+
+Laundry costs $1.75 wash, $1.75 dry, app-based. On noise: moderate; the building is L-shaped and the short wing is much quieter.
+
+## Sample Answer
+
+**Question:** is the housing lottery random?
+
+**Answer:** The housing lottery is not entirely random in the way most people assume. While rising sophomores get a number drawn at random, juniors and seniors are ordered by accumulated credit hours first, with random tie-breaks used only for ties.
+
+Source: admin_housing_lottery.txt
+
+**My relevance cutoff:** 0.6 (the starter's default — kept as-is)
+
+My five in-corpus questions had best distances of 0.234–0.347. My five out-of-scope questions had best distances of 0.825–0.934. That's a gap of about 0.478 with nothing in it, and 0.6 sits almost exactly in the middle of that gap — so I kept the default rather than moving it, since nothing in my data pointed anywhere else.
+
+| Question | In corpus? | Best distance |
+|---|---|---|
+| When is the deadline to add a course? | Yes | 0.311 |
+| For BIOL 160 Cell Biology, is the assessment curved? | Yes | 0.279 |
+| How often can you change your meal plan tier, and how much time do you have? | Yes | 0.243 |
+| For ECON 101, how many tests are there and are they all multiple choice? | Yes | 0.347 |
+| When do study abroad applications open? | Yes | 0.234 |
+| What is the capital of Mongolia? | No | 0.825 |
+| How do I change the oil in a diesel engine? | No | 0.934 |
+| Who won the 1994 World Cup? | No | 0.886 |
+| What is the recommended dosage of ibuprofen for a headache? | No | 0.844 |
+| How do I write a for loop in Rust? | No | 0.896 |
+
+## How I Used AI
+
+**1.** I hit a `TypeError: Number of requested results 0, cannot be negative, or zero` error when I ran `ask`. I asked Claude what it meant, and it explained the mechanism: my `index` run had gotten interrupted partway, leaving an empty vector store on disk, so the query asked for zero results. I deleted `chroma_db/` and re-ran `index` to completion, which fixed it.
+
+**2.** For Milestone 3, I decided on my own chunking strategy — one document equals one chunk, since I'd read that campus_life posts already pack one complete thought each — but asked Claude to write the actual `split_documents` function for me. It matched what I described; I didn't need to change anything, since the decision (not splitting) was simple enough that there wasn't much room for it to guess wrong.
 
 ---
 
-## 2. Every answer names a source
+# Unit 2
 
-Every answer the system produces names at least one source document.
+<!-- Not yet — this is next unit's work. -->
 
-**Why this target:**
+## Run Log — Before
 
-Naming a source is a simple instruction-following task rather than something
-requiring reasoning, so I expect the model to get it right every time. Gemini
-3.5 Flash-Lite is a lighter model, which makes me a little less confident than
-I'd be with a larger one, but since the grounding instruction tells it to name
-a source on every answer, I don't expect it to drop that instruction even if
-it occasionally struggles with harder judgment calls.
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
+| 2. Every answer names a source | 5 of 5 |  |  |  |  |
+| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
+| 4. | | | | | |
+| 5. | | | | | |
 
----
+## Verdicts
 
-## 3. The relevance gate stops out-of-corpus questions
+| # | Criterion | Verdict | How I decided |
+|---|---|---|---|
+| 1 |  |  |  |
+| 2 |  |  |  |
+| 3 |  |  |  |
+| 4 |  |  |  |
+| 5 |  |  |  |
 
-When I ask a question my documents clearly don't cover, the relevance gate
-stops it and the system returns "I don't have enough information about that" —
-in at least 4 of 5 tries.
+## Diagnoses
 
-**Why this target:**
+## The Improvement
 
-I expect the gate to have a harder time than criteria 1 and 2, since
-embeddings can pick up on shared wording even when topics are genuinely
-unrelated — a question about "a for loop in Rust" could still land closer to
-a course-related chunk than I'd like, just from overlapping vocabulary. That's
-why I'm not expecting a perfect 5 of 5: I want room for one edge case without
-treating the whole gate as broken.
+**What I changed:**
 
-> **Milestone 4 update:** The gap turned out even cleaner than expected — my
-> in-corpus questions maxed out at 0.347 and my out-of-scope questions
-> started at 0.825, a 0.478-wide gap with nothing in it. I kept the default
-> 0.6 cutoff since it already sits in the middle of that gap.
+**Why I picked it:**
 
----
+### Run Log — After
 
-## 4. Chunk length matches a complete thought
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
+| 2. Every answer names a source | 5 of 5 |  |  |  |  |
+| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
+| 4. | | | | | |
+| 5. | | | | | |
 
-After I build my own chunker, the average chunk length lands within 50
-characters of my corpus's average document length (~317 characters) — i.e.
-roughly 267 to 367 characters.
+**Did it help?**
 
-**Why this target:**
+## What's Still Broken
 
-My campus_life documents already pack an answer into one to three sentences,
-and the starter's own chunking summary already reports ~317 characters as the
-average document length for this corpus. A chunk near that size already holds
-one full post's worth of thought, so I want my chunker's average chunk length
-to land in that same range rather than drifting much smaller (cutting a
-thought in half) or much larger (merging unrelated posts together).
-
----
-
-## 5. Source attribution accuracy
-
-For at least 4 of my 5 test questions, the source named in the answer matches
-the document that actually contains the answer.
-
-**Why this target:**
-
-The system retrieves up to five chunks per question (top-k=5), not just the
-one with the answer, so there's a real chance Gemini 3.5 Flash-Lite cites a
-source it merely retrieved rather than the one it actually drew the answer
-from. I don't expect the answer content itself to be wrong — that's already
-covered by criterion 1 — just that with several plausible-looking sources in
-front of it, the model could mix up which one it names.
-
----
-
-<!-- ─────────────────────────────────────────────────────────────────────────
-     UNIT 2 — read this before you change anything above.
-
-     If a criterion turns out to be BROKEN rather than merely unmet, you can
-     revise it, and that earns credit. But never delete or edit the original
-     line. Add the revision underneath it, like this:
-
-         ## 1. Retrieved chunks contain the answer
-
-         For at least 4 of my 5 test questions, the retrieved chunks include
-         one that contains the answer.
-
-         **Why this target:** ...
-
-         > **Revised in unit 2:** For at least 4 of 5 questions, the top three
-         > results contain the answer.
-         >
-         > **Why revised:** I couldn't judge "the chunks include one that
-         > contains the answer" the same way twice — I scored two questions
-         > differently on Monday than on Wednesday. The new version is
-         > something I can actually check.
-
-     That's a revision because the criterion couldn't be MEASURED.
-
-     Lowering a target because you missed it is not a revision, and it costs
-     you the point:
-
-         ✗ "I said 4 of 5 but got 2 of 5, so 2 of 5 is more realistic."
-
-     A number you missed stays where it is, gets diagnosed, and gets a fix
-     attempted. That's where the points are.
-
-     The whole reason the originals stay visible is so someone can see what you
-     said before you knew the answer.
-     ───────────────────────────────────────────────────────────────────────── -->
+## What I'd Do Differently
