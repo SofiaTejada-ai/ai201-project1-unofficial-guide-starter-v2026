@@ -23,8 +23,12 @@ For at least 4 of my 5 test questions, the retrieved chunks include one that
 contains the answer.
 
 **Why this target:**
-<!-- e.g. "One of my questions is about a topic only two documents mention, so
-     I expect that one to be hard." -->
+
+My documents put the answer in one explicit sentence, so I expect this to be
+an easy target, since there's no inference required. I'm keeping it at 4 of 5
+rather than 5 of 5 anyway: one unlucky retrieval (two similar admin documents
+landing close in distance) shouldn't fail the whole criterion when the system
+is otherwise working as intended.
 
 ---
 
@@ -33,9 +37,12 @@ contains the answer.
 Every answer the system produces names at least one source document.
 
 **Why this target:**
-<!-- Why all five and not four? What about your setup makes that achievable —
-     or what would have to go wrong for it not to be? -->
-
+Naming a source is a simple instruction-following task rather than something
+requiring reasoning, so I expect the model to get it right every time. Gemini
+3.5 Flash-Lite is a lighter model, which makes me a little less confident than
+I'd be with a larger one, but since the grounding instruction tells it to name
+a source on every answer, I don't expect it to drop that instruction even if
+it occasionally struggles with harder judgment calls.
 ---
 
 ## 3. The relevance gate stops out-of-corpus questions
@@ -44,34 +51,31 @@ When I ask a question my documents clearly don't cover, the relevance gate
 stops it and the system returns "I don't have enough information about that" —
 in at least 4 of 5 tries.
 
-<!-- The five questions are the ones in `OUT_OF_SCOPE` at the bottom of
-     `questions.py`, and `run_eval.py` puts them through the gate and writes
-     what happened into your run log. Swap them for your own if you'd rather —
-     just keep five of them, or the "4 of 5" above has nothing to be 4 of. -->
-
 **Why this target:**
-<!-- What did your distances look like when you set the cutoff in Milestone 4?
-     Was there a clean gap, or did the two groups overlap? -->
 
----
+I expect the gate to have a harder time than criteria 1 and 2, since
+embeddings can pick up on shared wording even when topics are genuinely
+unrelated — a question about "a for loop in Rust" could still land closer to
+a course-related chunk than I'd like, just from overlapping vocabulary. That's
+why I'm not expecting a perfect 5 of 5: I want room for one edge case without
+treating the whole gate as broken.
 
 ## 4. Something about your chunks
 
-<!-- YOU WRITE THIS ONE.
+## 4. Chunk length matches a complete thought
 
-     How would you know if your chunks were the right size? Name something
-     countable or observable.
-
-     Examples of the right shape — don't copy these, they should come from
-     what you actually saw in Milestone 3:
-       - "At least 4 of 5 sampled chunks read as a complete thought, with no
-          sentence cut in half at either end."
-       - "No chunk is shorter than 200 characters, since anything below that
-          in my corpus turned out to be a heading with no content under it." -->
-
-
+After I build my own chunker, the average chunk length lands within 50
+characters of my corpus's average document length (~317 characters) — i.e.
+roughly 267 to 367 characters.
 
 **Why this target:**
+
+My campus_life documents already pack an answer into one to three sentences,
+and the starter's own chunking summary already reports ~317 characters as the
+average document length for this corpus. A chunk near that size already holds
+one full post's worth of thought, so I want my chunker's average chunk length
+to land in that same range rather than drifting much smaller (cutting a
+thought in half) or much larger (merging unrelated posts together).
 
 
 
@@ -79,18 +83,17 @@ in at least 4 of 5 tries.
 
 ## 5. Your choice
 
-<!-- YOU WRITE THIS ONE TOO.
-
-     Pick something you actually care about getting right. It could be about
-     speed, about refusals, about a particular kind of question your corpus
-     handles badly, about source attribution being correct rather than merely
-     present — anything, as long as it names a number or an observable
-     outcome. -->
-
-
+For at least 4 of my 5 test questions, the source named in the answer matches
+the document that actually contains the answer.
 
 **Why this target:**
 
+The system retrieves up to five chunks per question (top-k=5), not just the
+one with the answer, so there's a real chance Gemini 3.5 Flash-Lite cites a
+source it merely retrieved rather than the one it actually drew the answer
+from. I don't expect the answer content itself to be wrong — that's already
+covered by criterion 1 — just that with several plausible-looking sources in
+front of it, the model could mix up which one it names.
 
 
 ---
