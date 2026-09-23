@@ -143,6 +143,14 @@ every answer — not automated.
 
 ## Diagnoses
 
+## Diagnoses
+
+I didn't miss any of my five criteria, on any of the three runs. That's is not to say my system is automatically excellent, it could very well mean my evidence and target questions were set too easy. I designed my five test questions deliberately on the nose as base testing. Each one's answer sits explicitly in a single chunk (and since my chunking strategy is one document per chunk, that meant picking documents whose entire content is the answer), so retrieval and generation had very little room to fail.
+
+On two of my five questions ("is BIOL 160 curved?" and "how many tests does ECON 101 have?"), the model cited two source files instead of one. I checked both cases by hand, and both citations are genuinely correct, `course_biol_160.txt` and `course_econ_101.txt` each independently restate the same fact their matching exams document states. So this isn't a retrieval failure (both documents are legitimately relevant) and it isn't a hallucination (nothing cited is wrong), it's that my corpus has redundant information, the general course overview and the course specific exams doc both happen to say the same thing. My criterion 5 as written ("the source named matches the document that contains the answer") is lenient enough to count this as a pass, since every source named is correct.
+
+If I were tightening a criterion, I'd tighten criterion 5 so that "For at least 4 of my 5 test questions, exactly one source is named, and it's the single most relevant document." Under that stricter version, this run would have missed 2 of 5, since two questions named an extra, redundant source. That's the honest weak spot my current criteria are too loose to catch.
+
 ## The Improvement
 
 **What I changed:**
