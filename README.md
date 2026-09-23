@@ -107,27 +107,39 @@ My five in-corpus questions had best distances of 0.234–0.347. My five out-of-
 
 # Unit 2
 
-<!-- Not yet — this is next unit's work. -->
-
 ## Run Log — Before
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Chunk length matches a complete thought | 267–367 chars (avg) | 317 (one-time measurement — see Milestone 3) | — | — | MET |
+| 5. Source attribution accuracy | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+
+Full run log: `results/run_2026-09-23_1542.md`, produced by `run_eval.py::main`.
+`scorer.py` doesn't exist yet, so these counts are my own judgment from reading
+every answer — not automated.
+
+**Real output** (one example per question, run 1 — full transcript of all 15 runs is in the committed results file):
+
+### Criterion 1 & 5 — "When is the deadline to add a course?"
+
+- Best distance: 0.3111 (passed the gate)
+- Sources retrieved: admin_add_drop_deadline.txt, admin_pass_fail_option.txt, advising_registration.txt, course_biol_160_workload.txt, course_cs_340.txt
+
 
 ## Verdicts
 
 | # | Criterion | Verdict | How I decided |
 |---|---|---|---|
-| 1 |  |  |  |
-| 2 |  |  |  |
-| 3 |  |  |  |
-| 4 |  |  |  |
-| 5 |  |  |  |
+| 1 | Retrieved chunk contains the answer | MET | All three runs came back 5/5, not just the minimum 4/5 the target needed, and since retrieval is deterministic, the same sources came back every run, so it wasn't a lucky pass. |
+| 2 | Every answer names a source | MET | All 15 answers (5 questions × 3 runs) named at least one source file explicitly, in every run. |
+| 3 | Gate stops out-of-corpus questions | MET | 5 of 5 refused in one deterministic pass, consistent with the huge 0.478-wide distance gap I measured back in Milestone 4. |
+| 4 | Chunk length matches a complete thought | MET | The chunker's own summary line reports an average of exactly 317 characters, dead center of my 267–367 target range. |
+| 5 | Source attribution accuracy | MET | Every named source actually contained the answer when I checked the underlying document myself, including the two-source citations on the BIOL 160 question; both files independently say "not curved." |
+
+**A note on why everything passed so cleanly:** I designed my five test questions to be easy on purpose. I wanted to see how well Gemini 3.5 Flash-Lite performs at a baseline level before pushing it further, so I deliberately picked topics where the answer sits explicitly in one chunk (and since my chunking strategy is one document per chunk, that meant picking documents whose entire content is the answer, start to end, with nothing else mixed in). Retrieval and generation had very little room to fail with material shaped like that. A harder question set, one that needs two chunks combined, or asks something only implied rather than stated outright, would be a much more interesting test of where this system actually breaks.
 
 ## Diagnoses
 
