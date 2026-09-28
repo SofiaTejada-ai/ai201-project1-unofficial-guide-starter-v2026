@@ -107,6 +107,8 @@ My five in-corpus questions had best distances of 0.234–0.347. My five out-of-
 
 # Unit 2
 
+# Unit 2
+
 ## Run Log — Before
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
@@ -128,7 +130,6 @@ every answer — not automated.
 - Best distance: 0.3111 (passed the gate)
 - Sources retrieved: admin_add_drop_deadline.txt, admin_pass_fail_option.txt, advising_registration.txt, course_biol_160_workload.txt, course_cs_340.txt
 
-
 ## Verdicts
 
 | # | Criterion | Verdict | How I decided |
@@ -143,9 +144,7 @@ every answer — not automated.
 
 ## Diagnoses
 
-## Diagnoses
-
-I didn't miss any of my five criteria, on any of the three runs. That's is not to say my system is automatically excellent, it could very well mean my evidence and target questions were set too easy. I designed my five test questions deliberately on the nose as base testing. Each one's answer sits explicitly in a single chunk (and since my chunking strategy is one document per chunk, that meant picking documents whose entire content is the answer), so retrieval and generation had very little room to fail.
+I didn't miss any of my five criteria, on any of the three runs. That's not to say my system is automatically excellent, it could very well mean my criteria and test questions were set too easy. I designed my five test questions deliberately on the nose as base testing. Each one's answer sits explicitly in a single chunk (and since my chunking strategy is one document per chunk, that meant picking documents whose entire content is the answer), so retrieval and generation had very little room to fail.
 
 On two of my five questions ("is BIOL 160 curved?" and "how many tests does ECON 101 have?"), the model cited two source files instead of one. I checked both cases by hand, and both citations are genuinely correct, `course_biol_160.txt` and `course_econ_101.txt` each independently restate the same fact their matching exams document states. So this isn't a retrieval failure (both documents are legitimately relevant) and it isn't a hallucination (nothing cited is wrong), it's that my corpus has redundant information, the general course overview and the course specific exams doc both happen to say the same thing. My criterion 5 as written ("the source named matches the document that contains the answer") is lenient enough to count this as a pass, since every source named is correct.
 
@@ -155,19 +154,53 @@ If I were tightening a criterion, I'd tighten criterion 5 so that "For at least 
 
 **What I changed:**
 
+Replaced my Milestone 3 chunker (one document = one chunk) with paragraph splitting: `chunker.py::split_documents` now splits each document on blank lines, so a document with a title and two paragraphs becomes three separate chunks instead of one.
+
 **Why I picked it:**
 
-### Run Log — After
+I wanted to test Gemini at a more basic level rather than assume my perfect Unit 1 score meant the system was excellent. My chunker kept every document whole, which meant every chunk was already small and topically clean, so I wanted to see whether the clean result was really about the pipeline or just about how easy the chunks were.
+
+### Run Log — After (paragraph-splitting)
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 4/5 | 4/5 | 4/5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5/5 | 4/5 | 4/5 | MISSED |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Chunk length matches a complete thought | 267 to 367 chars (avg) | 101 (one time measurement, see below) | | | MISSED |
+| 5. Source attribution accuracy | 4 of 5 | 4/5 | 4/5 | 4/5 | MET |
+
+Full run log: `results/run_2026-09-27_2139_after.md`, produced by `run_eval.py::main`.
+
+**Chunking summary (produced by `chunker.py::split_documents`, printed by `python app.py index`):** 271 chunks, 101 characters average, shortest 10, longest 373. Compare to before: 88 chunks, 317 average, shortest 178, longest 549.
+
+**Real output, the one question that changed behavior:**
+
+### For ECON 101, how many tests are there and are they all multiple choice? — run 1
+
+- Best distance: 0.4424 (passed the gate)
+- Sources retrieved: course_biol_160_exams.txt, course_cs_210_exams.txt, course_econ_101.txt, course_econ_101_exams.txt, course_econ_101_workload.txt
+I do not have enough information to answer how many tests there are for ECON 101 or whether they are all multiple choice (Source: course_econ_101_exams.txt, course_econ_101.txt, course_econ_101_workload.txt).
+
+
+### For ECON 101, how many tests are there and are they all multiple choice? — run 2
+I do not have enough information to answer this question from the provided documents.
+
+
+**Retrieval check that shows why (`python app.py retrieve`, same question):**
+distance source preview
+1 0.4424 course_econ_101_exams.txt ECON 101 Introduction to Economics — assessment...
+2 0.5226 course_econ_101.txt ECON 101 Introduction to Economics...
+3 0.5324 course_econ_101_workload.txt Workload for ECON 101 Introduction to Economics...
+4 0.5601 course_biol_160_exams.txt Four unit tests and a cumulative final. Not curved....
+5 0.5732 course_cs_210_exams.txt Do the labs even though they're only 10% — the exams...
+
+
+The top 3 results are all title only fragments ("ECON 101 Introduction to Economics", "ECON 101 Introduction to Economics — assessment", "Workload for ECON 101 Introduction to Economics"). Paragraph splitting cut each document's title onto its own line before the first blank line, which turned it into its own tiny chunk. That title fragment matches the question's course name keywords just as well as the real content does, without carrying any of the actual fact, so it crowded the answer bearing paragraph out of the top 5 entirely.
 
 **Did it help?**
+
+No. It made things measurably worse. Criterion 2 (every answer names a source) went from a clean 5/5 on all three runs to missing on two of three runs, and criterion 4 (chunk length) went from a dead center 317 characters to 101, far outside my target range. The mechanism, confirmed with `python app.py retrieve`, is that several of my documents start with a short title line before their first blank line, and splitting on paragraphs turned each title into its own tiny, generic chunk. For the ECON 101 question, those title fragments ranked ahead of the actual answer bearing paragraph in retrieval, so the model correctly refused to answer rather than guess, since it genuinely was not shown the fact. Criteria 1 and 5 still held, but only at the exact minimum (4 of 5) instead of comfortably (5 of 5), so the system got measurably more fragile even where it did not outright fail.
 
 ## What's Still Broken
 
