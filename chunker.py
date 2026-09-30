@@ -115,6 +115,10 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
     for doc in documents:
         paragraphs = [p.strip() for p in doc.text.split("\n\n")]
         paragraphs = [p for p in paragraphs if p]
+
+        if len(paragraphs) > 1 and len(paragraphs[0]) < 60:
+            paragraphs = [paragraphs[0] + "\n\n" + paragraphs[1]] + paragraphs[2:]
+
         for i, paragraph in enumerate(paragraphs):
             chunks.append(
                 Chunk(
